@@ -1,0 +1,13 @@
+
+db:
+  port: "3030"
+  name: "postgres"
+  user: "postgres"
+  password: "postgres"
+  host: "db"
+
+ server:
+  host: "localhost"
+  port: "8080"
+ 
+
