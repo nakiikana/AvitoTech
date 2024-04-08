@@ -21,7 +21,7 @@ type DB struct {
 
 type Server struct {
 	Host string
-	Port int
+	Port string
 }
 
 func LoadAndStore(addr string) (*Configuration, error) {

@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 func NewPostgresDB(config *cfg.Configuration) (*sqlx.DB, error) {
-	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", config.DB.Host, config.DB.Port, config.DB.Name, config.DB.Password))
+	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%s dbname=%s password=%s sslmode=disable", config.DB.Host, config.DB.Port, config.DB.Name, config.DB.Password))
 	if err != nil {
 		log.Fatalf("Couldn't connect to DB:%v", err)
 		return nil, err
@@ -20,16 +20,3 @@ func NewPostgresDB(config *cfg.Configuration) (*sqlx.DB, error) {
 	}
 	return db, nil
 }
-
-// create tables here
-// func main() {
-// 	config, err := cfg.LoadAndStore("../cfg")
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-// 	_, err = NewPostgresDB(config)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-
-// }
