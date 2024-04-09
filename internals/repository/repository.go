@@ -70,3 +70,38 @@ func (r *Repository) FindBanner(input *models.BannerGetMethod) (*models.Banner, 
 	return content, nil
 
 }
+
+func (r *Repository) CreateBanner(input *models.Banner) (*models.InsertedBannerResponse, error) {
+	var id_b, id_tf int64
+	bannerContentJson, err := json.Marshal(input.Content)
+	if err != nil {
+		log.Printf("Couldn't marshal banner's content: %v", err)
+		return &models.InsertedBannerResponse{}, err
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		log.Printf("Couldn't start a new transaction: %v", err)
+		return &models.InsertedBannerResponse{}, err
+	}
+	query := insertBanner
+	err = tx.QueryRow(query, bannerContentJson, input.IsActive).Scan(&id_b)
+	if err != nil {
+		log.Printf("Couldn't create a new banner: %v", err)
+		tx.Rollback()
+		return &models.InsertedBannerResponse{}, err
+	}
+
+	query = insertFeatureAndTag
+	err1 := tx.QueryRow(query, id_b, input.FeatureID, pq.Array(input.TagIDs)).Scan(&id_tf)
+	if err1 != nil {
+		log.Printf("Couldn't add new tags and feature: %v", err1)
+		tx.Rollback()
+		return &models.InsertedBannerResponse{}, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Couldn't commit the transaction: %v", err)
+		return &models.InsertedBannerResponse{}, err
+	}
+	return &models.InsertedBannerResponse{BannerId: uint64(id_b)}, nil
+}

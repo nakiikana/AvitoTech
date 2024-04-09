@@ -28,7 +28,7 @@ func (h *Handler) FindBanner(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		input.UseLastRevision = false //будет ли это работать по умолчанию
 	}
-	//добавить токены
+	//ToDo: ПРОВЕРКА ТОКЕНОВ
 	//мб добавить валидацию для объектов
 
 	if content, err := h.service.FindBanner(input); err == sql.ErrNoRows {
@@ -45,6 +45,12 @@ func (h *Handler) FindBanner(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (h *Handler) Banner(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("что надо??????"))
+func (h *Handler) CreateBanner(w http.ResponseWriter, r *http.Request) {
+	banner := &models.Banner{}
+	err := json.NewDecoder(r.Body).Decode(banner)
+	if err != nil {
+		log.Printf("CreateBanner: couldn't decode the json: %v", err)
+		w.WriteHeader(http.StatusBadRequest) // здесь ли возвращать
+		return
+	}
 }
