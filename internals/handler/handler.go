@@ -16,7 +16,8 @@ func NewHandler(service *service.Service) *Handler {
 
 func (h *Handler) InitRoutes() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/user_banner", h.Get_Banner).Methods("GET")
-	r.HandleFunc("/banner", h.Banner).Methods("GET")
+	r.HandleFunc("/user_banner", h.FindBanner).Methods("GET")
+	r.HandleFunc("/banner", h.CreateBanner).Methods("POST")
+	// r.HandleFunc("/banner", h.Banner).Methods("GET")
 	return r
 }

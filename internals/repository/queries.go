@@ -21,7 +21,7 @@ const (
 	getBanner = `
 		SELECT content FROM banner b
 		INNER JOIN (SELECT banner_id FROM tag_feature_banner 
-		WHERE feature_id = $1 AND tag_id = $2) AS t ON t.banner_id = b.banner_id
+		WHERE feature_id = $1 AND tag_id = $2) AS t ON t.banner_id = b.id
 		WHERE is_active = true
 	`
 )

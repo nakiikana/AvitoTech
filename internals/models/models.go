@@ -8,6 +8,13 @@ type Banner struct {
 	IsActive  bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	TagIDs    []uint64
-	FeatureID uint64
+	TagIDs    []uint64 `json:"tag_id"`
+	FeatureID uint64   `json:"feature_id"`
+}
+
+type BannerGetMethod struct {
+	TagID           uint64 // почему не массив
+	FeatureID       uint64
+	UseLastRevision bool
+	// !Token
 }
