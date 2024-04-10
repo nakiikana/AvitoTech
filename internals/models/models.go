@@ -1,24 +1,39 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Banner struct {
 	ID        uint64
-	Content   string `json: "context"`
-	IsActive  bool   `json:"is_active"`
+	Content   json.RawMessage `json: "content"` // нормально ли
+	IsActive  bool            `json:"is_active"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	TagIDs    []uint64 `json:"tag_id"`
+	TagIDs    []uint64 `json:"tag_ids"`
 	FeatureID uint64   `json:"feature_id"`
 }
 
-type BannerGetMethod struct {
-	TagID           uint64 // почему не массив
+type BannerUpdateRequest struct {
+	BannerId  *uint64
+	Content   *json.RawMessage `json: "content"`
+	TagIDs    *[]int64         `json:"tag_ids"`
+	FeatureId *uint64          `json:"feature_id"`
+	IsActive  *bool            `json:"is_active"`
+}
+
+type BannerGetRequest struct {
+	TagID           uint64
 	FeatureID       uint64
 	UseLastRevision bool
 	// !Token
 }
 
-type InsertedBannerResponse struct {
+type BannerID struct {
 	BannerId uint64 `json:"banner_id"`
+}
+
+type ErrorMessage struct {
+	Error string `json:"error"`
 }

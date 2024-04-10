@@ -13,10 +13,18 @@ func NewService(rp *repository.Repository) *Service {
 	return &Service{rp: rp}
 }
 
-func (s *Service) FindBanner(input *models.BannerGetMethod) (*models.Banner, error) {
+func (s *Service) FindBanner(input *models.BannerGetRequest) (*models.Banner, error) {
 	return s.rp.FindBanner(input)
 }
 
-func (s *Service) CreateBanner(input *models.Banner) (*models.InsertedBannerResponse, error) {
+func (s *Service) CreateBanner(input *models.Banner) (*models.BannerID, error) {
 	return s.rp.CreateBanner(input)
+}
+
+func (s *Service) DeleteBanner(input *models.BannerID) error {
+	return s.rp.DeleteBanner(input)
+}
+
+func (s *Service) UpdateBanner(input *models.BannerUpdateRequest) error {
+	return s.rp.UpdateBanner(input)
 }

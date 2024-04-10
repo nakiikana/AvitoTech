@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"tools/internals/models"
 
@@ -18,42 +19,7 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) AddBanner(banner *models.Banner) (int64, int64, error) {
-	var id_b, id_tf int64
-	bannerContentJson, err := json.Marshal(banner.Content)
-	if err != nil {
-		log.Printf("Couldn't marshal banner's content: %v", err)
-		return 0, 0, nil
-	}
-	tx, err := r.db.Begin()
-	if err != nil {
-		log.Printf("Couldn't start a new transaction: %v", err)
-		return 0, 0, err
-	}
-	query := insertBanner
-	err = tx.QueryRow(query, bannerContentJson, banner.IsActive).Scan(&id_b)
-	if err != nil {
-		log.Printf("Couldn't create a new banner: %v", err)
-		tx.Rollback()
-		return 0, 0, err
-	}
-
-	query = insertFeatureAndTag
-	err1 := tx.QueryRow(query, id_b, banner.FeatureID, pq.Array(banner.TagIDs)).Scan(&id_tf)
-	if err1 != nil {
-		log.Printf("Couldn't add new tags and feature: %v", err1)
-		tx.Rollback()
-		return 0, 0, err
-	}
-	err = tx.Commit()
-	if err != nil {
-		log.Printf("Couldn't commit the transaction: %v", err)
-		return 0, 0, err
-	}
-	return id_b, id_tf, nil
-}
-
-func (r *Repository) FindBanner(input *models.BannerGetMethod) (*models.Banner, error) {
+func (r *Repository) FindBanner(input *models.BannerGetRequest) (*models.Banner, error) {
 	content := &models.Banner{}
 	query := getBanner
 	ans := r.db.QueryRow(query, input.FeatureID, input.TagID)
@@ -67,41 +33,109 @@ func (r *Repository) FindBanner(input *models.BannerGetMethod) (*models.Banner, 
 			return &models.Banner{}, err
 		}
 	}
+	fmt.Println(content)
 	return content, nil
 
 }
 
-func (r *Repository) CreateBanner(input *models.Banner) (*models.InsertedBannerResponse, error) {
+func (r *Repository) CreateBanner(input *models.Banner) (*models.BannerID, error) {
 	var id_b, id_tf int64
-	bannerContentJson, err := json.Marshal(input.Content)
+	fmt.Println(input.TagIDs)
+	bannerContentJson, err := json.Marshal(input.Content) // нужна ли эта ошибка? вынести их по возможности
 	if err != nil {
 		log.Printf("Couldn't marshal banner's content: %v", err)
-		return &models.InsertedBannerResponse{}, err
+		return &models.BannerID{}, err
 	}
 	tx, err := r.db.Begin()
 	if err != nil {
 		log.Printf("Couldn't start a new transaction: %v", err)
-		return &models.InsertedBannerResponse{}, err
+		return &models.BannerID{}, err
 	}
 	query := insertBanner
 	err = tx.QueryRow(query, bannerContentJson, input.IsActive).Scan(&id_b)
 	if err != nil {
 		log.Printf("Couldn't create a new banner: %v", err)
 		tx.Rollback()
-		return &models.InsertedBannerResponse{}, err
+		return &models.BannerID{}, err
 	}
 
 	query = insertFeatureAndTag
 	err1 := tx.QueryRow(query, id_b, input.FeatureID, pq.Array(input.TagIDs)).Scan(&id_tf)
 	if err1 != nil {
-		log.Printf("Couldn't add new tags and feature: %v", err1)
+		log.Printf("Couldn't add new tags and feature: %v", err1) //стоит ли обрабатывать перескок id
 		tx.Rollback()
-		return &models.InsertedBannerResponse{}, err
+		return &models.BannerID{}, err
 	}
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("Couldn't commit the transaction: %v", err)
-		return &models.InsertedBannerResponse{}, err
+		return &models.BannerID{}, err
 	}
-	return &models.InsertedBannerResponse{BannerId: uint64(id_b)}, nil
+	return &models.BannerID{BannerId: uint64(id_b)}, nil
+}
+
+func (r *Repository) DeleteBanner(input *models.BannerID) error {
+	query := deleteBanner
+	tx, err := r.db.Begin()
+	if err != nil {
+		log.Printf("Couldn't start a new transaction: %v", err)
+		return err
+	}
+	_, err = tx.Exec(query, input.BannerId) //тут другой уже(
+	if err != nil {
+		log.Printf("DeleteBanner: an error occured when deleting: %v", err)
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Couldn't commit the transaction: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) UpdateBanner(input *models.BannerUpdateRequest) error {
+	var deletedFeature uint64
+	alreadyDone := false //нет?
+	if input.TagIDs != nil {
+		query := deleteFeatureTagComb
+		err := r.db.QueryRow(query, *input.BannerId).Scan(&deletedFeature)
+		if err != nil {
+			log.Printf("Couldn't delete row when updating: %v", err)
+			return err
+		}
+		if input.FeatureId != nil {
+			alreadyDone = true
+			query = insertFeatureAndTag
+
+			_, err := r.db.Exec(query, *input.BannerId, deletedFeature, pq.Array(input.TagIDs))
+			log.Printf("Couldn't update row: %v", err)
+			return err
+		}
+	}
+	if input.FeatureId != nil && !alreadyDone { //не плюсовато ли
+		query := updateFeature
+		err := r.db.QueryRow(query, input.FeatureId, input.BannerId)
+		if err != nil {
+			log.Printf("Couldn't delete row when updating: %v", err)
+			return err.Err()
+		}
+	}
+	if input.Content != nil { //не плюсовато ли
+		query := updateContent
+		err := r.db.QueryRow(query, input.Content, input.BannerId)
+		if err != nil {
+			log.Printf("Couldn't update the content: %v", err)
+			return err.Err()
+		}
+	}
+	if input.IsActive != nil {
+		query := updateIsActive
+		err := r.db.QueryRow(query, input.Content, input.BannerId)
+		if err != nil {
+			log.Printf("Couldn't update the content: %v", err)
+			return err.Err()
+		}
+	}
+	return nil
 }
