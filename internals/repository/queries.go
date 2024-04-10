@@ -31,6 +31,6 @@ const (
 		UPDATE banner SET is_active = $1 WHERE id = $2
 	`
 	updateContent = `
-		UPDATE tag_feature_banner SET content = $1 WHERE banner_id = $2
+		UPDATE banner SET content = $1 WHERE id = $2
 	`
 )

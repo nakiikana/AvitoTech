@@ -107,31 +107,33 @@ func (r *Repository) UpdateBanner(input *models.BannerUpdateRequest) error {
 		if input.FeatureId != nil {
 			alreadyDone = true
 			query = insertFeatureAndTag
-
-			_, err := r.db.Exec(query, *input.BannerId, deletedFeature, pq.Array(input.TagIDs))
-			log.Printf("Couldn't update row: %v", err)
-			return err
+			_, err := r.db.Exec(query, *input.BannerId, *input.FeatureId, pq.Array(input.TagIDs)) // change to queryrow if u want
+			if err != nil {
+				log.Printf("Couldn't update row: %v", err)
+				return err
+			}
 		}
 	}
 	if input.FeatureId != nil && !alreadyDone { //не плюсовато ли
 		query := updateFeature
-		err := r.db.QueryRow(query, input.FeatureId, input.BannerId)
+		err := r.db.QueryRow(query, *input.FeatureId, *input.BannerId)
 		if err != nil {
 			log.Printf("Couldn't delete row when updating: %v", err)
 			return err.Err()
 		}
 	}
 	if input.Content != nil { //не плюсовато ли
+		fmt.Println(input.Content)
 		query := updateContent
 		err := r.db.QueryRow(query, input.Content, input.BannerId)
 		if err != nil {
-			log.Printf("Couldn't update the content: %v", err)
+			log.Printf("Couldn't update the content: %v", err.Err())
 			return err.Err()
 		}
 	}
 	if input.IsActive != nil {
 		query := updateIsActive
-		err := r.db.QueryRow(query, input.Content, input.BannerId)
+		err := r.db.QueryRow(query, *input.Content, *input.BannerId)
 		if err != nil {
 			log.Printf("Couldn't update the content: %v", err)
 			return err.Err()
