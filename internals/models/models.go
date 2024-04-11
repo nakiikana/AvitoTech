@@ -6,8 +6,8 @@ import (
 )
 
 type Banner struct {
-	ID        uint64
-	Content   json.RawMessage `json: "content"` // нормально ли
+	ID        uint64          `json: "banner_id"`
+	Content   json.RawMessage `json: "content"`
 	IsActive  bool            `json:"is_active"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -28,6 +28,13 @@ type BannerGetRequest struct {
 	FeatureID       uint64
 	UseLastRevision bool
 	// !Token
+}
+
+type BannerGetAdminRequest struct {
+	TagID     uint64
+	FeatureID uint64
+	Limit     int
+	Offset    int
 }
 
 type BannerID struct {

@@ -20,5 +20,6 @@ func (h *Handler) InitRoutes() *mux.Router {
 	r.HandleFunc("/banner", h.CreateBanner).Methods("POST")
 	r.HandleFunc("/banner/{id}", h.DeleteBanner).Methods("DELETE")
 	r.HandleFunc("/banner/{id}", h.UpdateBanner).Methods("PATCH")
+	r.HandleFunc("/banner", h.GetFilteredBanner).Methods("GET")
 	return r
 }

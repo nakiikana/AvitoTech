@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -38,16 +37,11 @@ func (h *Handler) FindBanner(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Couldn't find the required banner: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
-	} else { //некрасиво
-		// if ans, err := json.Marshal(content.Content); err != nil {
-		// 	log.Printf("FindBanner: failed marshalling the string") // content is a string??
-		// 	return
-		// } else {
-		w.Write(content.Content) //не так?
-		// }
+	} else {
+		w.Write(content.Content)
 	}
-
 }
+
 func (h *Handler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 	banner := &models.Banner{}
 	err := json.NewDecoder(r.Body).Decode(banner)
@@ -94,29 +88,39 @@ func (h *Handler) DeleteBanner(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
+
 	input := &models.BannerUpdateRequest{}
-	var err error
-	err = json.NewDecoder(r.Body).Decode(input)
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-	input.BannerId = new(uint64)
-	fmt.Println(input.TagIDs)
-	if *input.BannerId, err = strconv.ParseUint(idStr, 10, 64); err != nil {
-		log.Printf("DeleteBanner: couldn't find id: %v", err)
-		JSONError(w, models.ErrorMessage{Error: "No id passed"}, http.StatusBadRequest)
-		return
-	}
+	err := json.NewDecoder(r.Body).Decode(input)
 	if err != nil {
 		log.Printf("UpdateBanner: couldn't decode the json: %v", err)
 		JSONError(w, models.ErrorMessage{Error: "couldn't decode the json"}, http.StatusBadRequest)
 		return
 	}
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	input.BannerId = new(uint64)
+
+	if *input.BannerId, err = strconv.ParseUint(idStr, 10, 64); err != nil {
+		log.Printf("DeleteBanner: couldn't find id: %v", err)
+		JSONError(w, models.ErrorMessage{Error: "No id passed"}, http.StatusBadRequest)
+		return
+	}
 	if err := h.service.UpdateBanner(input); err != nil {
-		log.Printf("UpdateBanner: couldn't decode the json: %v", err)
+		log.Printf("UpdateBanner: couldn't update the banner: %v", err)
 		JSONError(w, models.ErrorMessage{Error: "No results returned"}, http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetFilteredBanner(w http.ResponseWriter, r *http.Request) {
+	input := models.BannerGetAdminRequest{}
+
+	input.TagID, _ = strconv.ParseUint(r.URL.Query().Get("tag_id"), 10, 64)
+	input.FeatureID, _ = strconv.ParseUint(r.URL.Query().Get("feature_id"), 10, 64)
+	input.Limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
+	input.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+
+	h.service.GetFilteredBanner(&input)
 }
 
 func JSONError(w http.ResponseWriter, err interface{}, code int) { // куда тебя деть
