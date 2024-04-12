@@ -6,13 +6,13 @@ import (
 )
 
 type Banner struct {
-	ID        uint64          `json: "banner_id"`
-	Content   json.RawMessage `json: "content"`
+	ID        uint64          `json:"banner_id"`
+	TagIDs    []int64         `json:"tag_ids"`
+	FeatureID uint64          `json:"feature_id"`
+	Content   json.RawMessage `json:"content"`
 	IsActive  bool            `json:"is_active"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	TagIDs    []uint64 `json:"tag_ids"`
-	FeatureID uint64   `json:"feature_id"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 type BannerUpdateRequest struct {
@@ -31,10 +31,10 @@ type BannerGetRequest struct {
 }
 
 type BannerGetAdminRequest struct {
-	TagID     uint64
-	FeatureID uint64
-	Limit     int
-	Offset    int
+	TagID     *uint64
+	FeatureID *uint64
+	Limit     *int
+	Offset    *int
 }
 
 type BannerID struct {

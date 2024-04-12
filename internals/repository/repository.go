@@ -147,26 +147,39 @@ func (r *Repository) UpdateBanner(input *models.BannerUpdateRequest) error {
 	return nil
 }
 
-func (r *Repository) GetFilteredBanner(input *models.BannerGetAdminRequest) (*[]models.Banner, error, int) {
-	fmt.Println(input.FeatureID)
-	fmt.Println(input.Limit)
-	fmt.Println(input.Offset)
-	fmt.Println(input.TagID)
-	params := []interface{}{
-		sql.NullInt64{Valid: input.FeatureID != 0, Int64: int64(input.FeatureID)},
-		sql.NullInt64{Valid: input.TagID != 0, Int64: int64(input.TagID)},
-		input.Limit,
-		input.Offset,
-	}
+func (r *Repository) GetFilteredBanner(input *models.BannerGetAdminRequest) ([]models.Banner, error) {
+
+	var count int
 	query := getBannerAdmin
-	rows, err := r.db.Queryx(query, params...)
+	fmt.Println(input.FeatureID)
+	fmt.Println(input.TagID)
+	fmt.Println(input.Offset)
+	fmt.Println(input.Limit)
+	rows, err := r.db.Queryx(query, input.FeatureID, input.TagID, input.Limit, input.Offset)
+	if err != nil {
+		log.Printf("GetFilteredBanner: couldn't execute queryx: %v", err)
+		return nil, err
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
-	if err != nil {
+
+	banners := make([]models.Banner, 0)
+	for rows.Next() {
+		var banner models.Banner
+		if err := rows.Scan(&banner.ID, pq.Array(&banner.TagIDs), &banner.Content, &banner.FeatureID, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt); err != nil {
+			log.Printf("GetFilteredBanner: error scaning a row: %v", err)
+			return banners, nil
+		}
+		banners = append(banners, banner)
+		count += 1
+	}
+	fmt.Println(count)
+
+	if err = rows.Err(); err != nil {
 		log.Printf("GetFilteredBanner: couldn't execute the filter query: %v", err)
-		return nil, err, 0
+		return nil, err
 	}
 
-	return nil, nil, 0
+	return banners, nil
 }

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"tools/internals/models"
 	"tools/internals/repository"
 )
@@ -30,7 +29,6 @@ func (s *Service) UpdateBanner(input *models.BannerUpdateRequest) error {
 	return s.rp.UpdateBanner(input)
 }
 
-func (s *Service) GetFilteredBanner(input *models.BannerGetAdminRequest) (*[]models.Banner, error, int) {
-	fmt.Println("here")
+func (s *Service) GetFilteredBanner(input *models.BannerGetAdminRequest) ([]models.Banner, error) {
 	return s.rp.GetFilteredBanner(input)
 }

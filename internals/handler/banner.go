@@ -115,12 +115,36 @@ func (h *Handler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetFilteredBanner(w http.ResponseWriter, r *http.Request) {
 	input := models.BannerGetAdminRequest{}
 
-	input.TagID, _ = strconv.ParseUint(r.URL.Query().Get("tag_id"), 10, 64)
-	input.FeatureID, _ = strconv.ParseUint(r.URL.Query().Get("feature_id"), 10, 64)
-	input.Limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
-	input.Offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	if val, _ := strconv.ParseUint(r.URL.Query().Get("tag_id"), 10, 64); val != 0 {
+		input.TagID = new(uint64)
+		*input.TagID = val
+	}
+	if val, _ := strconv.ParseUint(r.URL.Query().Get("feature_id"), 10, 64); val != 0 {
+		input.FeatureID = new(uint64)
+		*input.FeatureID = val
+	}
+	if val, _ := strconv.Atoi(r.URL.Query().Get("limit")); val != 0 {
+		input.Limit = new(int)
+		*input.Limit = val
+	}
+	if val, _ := strconv.Atoi(r.URL.Query().Get("offset")); val != 0 {
+		input.Offset = new(int)
+		*input.Offset = val
+	}
 
-	h.service.GetFilteredBanner(&input)
+	bnr, err := h.service.GetFilteredBanner(&input)
+
+	if err != nil {
+		log.Printf("GetFilteredBanner: couldn't implement the query: %v", err)
+		JSONError(w, models.ErrorMessage{Error: "Couldn't implement the query"}, http.StatusInternalServerError)
+		return
+	}
+	ans, err := json.Marshal(bnr)
+	if err != nil {
+		log.Printf("GetFilteredBanner: couldn't unmarshall json")
+		JSONError(w, models.ErrorMessage{Error: "Couldn't unmarshall json"}, http.StatusInternalServerError)
+	}
+	w.Write(ans)
 }
 
 func JSONError(w http.ResponseWriter, err interface{}, code int) { // куда тебя деть

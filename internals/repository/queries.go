@@ -34,17 +34,17 @@ const (
 		UPDATE banner SET content = $1 WHERE id = $2
 	`
 	getBannerAdmin = `
-		SELECT b.id, ARRAY_AGG(ftb.tag_id)::bigint[] AS tag_ids, ftb.feature_id, b.is_active, b.created_at, b.updated_at 
-		FROM banner b
-		INNER JOIN tag_feature_banner ftb ON ftb.banner_id = b.id
-		WHERE b.id IN (
-        SELECT DISTINCT banner_id 
-        FROM features_tags_banner 
-        WHERE 
-            ($1::bigint IS NOT NULL AND feature_id = $1) OR 
-            ($2::bigint IS NOT NULL AND tag_id = $2))
-		GROUP BY b.id, ftb.feature_id
-		LIMIT $3 
-		OFFSET $4
+	SELECT banner.id, array_agg(ftb.tag_id)::bigint[] as tag_ids, banner.content, ftb.feature_id, banner.is_active,
+	banner.created_at, banner.updated_at FROM banner
+	INNER JOIN tag_feature_banner as ftb ON (ftb.banner_id = banner.id)	
+	WHERE banner.id in (
+	(
+	 SELECT DISTINCT banner_id FROM tag_feature_banner
+	 WHERE (CASE WHEN $1::bigint IS NOT NULL THEN feature_id = $1 ELSE true END)
+	   and (CASE WHEN $2::bigint IS NOT NULL THEN tag_id = $2 ELSE true END) 
+ 	)
+	)
+	GROUP BY banner.id, ftb.feature_id
+	LIMIT $3 OFFSET $4
 	`
 )
