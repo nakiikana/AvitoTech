@@ -27,10 +27,10 @@ func (r *Repository) FindBanner(input *models.BannerGetRequest) (*models.Banner,
 		if err = sql.ErrNoRows; err != nil {
 
 			log.Printf("FindBanner: no rows found: %v tag_id: %d feature_id: %d", err, input.TagID, input.FeatureID)
-			return &models.Banner{}, err
+			return &models.Banner{}, ErrorNoRowsFound
 		} else {
 			log.Printf("FindBanner: an error occured when looking for a banner: %v", err)
-			return &models.Banner{}, err
+			return &models.Banner{}, ErrorFindingBanner
 		}
 	}
 	return content, nil
@@ -42,12 +42,12 @@ func (r *Repository) CreateBanner(input *models.Banner) (*models.BannerID, error
 	fmt.Println(input.TagIDs)                             //удалить потом
 	bannerContentJson, err := json.Marshal(input.Content) // нужна ли эта ошибка? вынести их по возможности
 	if err != nil {
-		log.Printf("Couldn't marshal banner's content: %v", err)
+		log.Printf("CreateBanner: couldn't marshal banner's content: %v", err)
 		return &models.BannerID{}, err
 	}
 	tx, err := r.db.Begin()
 	if err != nil {
-		log.Printf("Couldn't start a new transaction: %v", err)
+		log.Printf("CreateBanner: couldn't start a new transaction: %v", err)
 		return &models.BannerID{}, err
 	}
 	query := insertBanner

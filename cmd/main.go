@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	cache "tools/internals/cache/middleware"
 	"tools/internals/cfg"
 	"tools/internals/handler"
 	"tools/internals/repository"
@@ -20,7 +21,8 @@ func main() {
 		log.Fatalf("Couldn't connect tp DB: %v", err)
 	}
 	rep := repository.NewRepository(db)
-	srvc := service.NewService(rep)
+	cache := cache.NewCache()
+	srvc := service.NewService(rep, cache)
 	hdl := handler.NewHandler(srvc)
 	srv := new(server.Server)
 	if err = srv.Run(hdl.InitRoutes()); err != nil {

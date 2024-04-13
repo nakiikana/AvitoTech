@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,9 +27,10 @@ func (h *Handler) FindBanner(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	input.UseLastRevision, err = strconv.ParseBool(r.URL.Query().Get("use_last_revision")) //парсить таким образом для каждого значения??
+	input.UseLastRevision, err = strconv.ParseBool(r.URL.Query().Get("use_last_revision"))
+	fmt.Println(input.UseLastRevision)
 	if err != nil {
-		input.UseLastRevision = false //будет ли это работать по умолчанию
+		input.UseLastRevision = false
 	}
 	//ToDo: ПРОВЕРКА ТОКЕНОВ
 	//мб добавить валидацию для объектов
