@@ -11,15 +11,18 @@ import (
 )
 
 func main() {
+	config, err := cfg.LoadAndStore("./config")
 
-	config, err := cfg.LoadAndStore("../config")
 	if err != nil {
 		log.Fatalf("Couldn't parse the config file: %v", err)
 	}
+
 	db, err := repository.NewPostgresDB(config)
 	if err != nil {
 		log.Fatalf("Couldn't connect tp DB: %v", err)
 	}
+	defer db.Close()
+
 	rep := repository.NewRepository(db)
 	cache := cache.NewCache(config)
 	srvc := service.NewService(rep, cache)

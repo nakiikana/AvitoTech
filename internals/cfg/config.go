@@ -2,6 +2,9 @@ package cfg
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	// "log"
 
 	"github.com/spf13/viper"
@@ -33,12 +36,14 @@ type Redis struct {
 
 func LoadAndStore(addr string) (*Configuration, error) {
 	config := &Configuration{}
-	viper.AddConfigPath(addr)
+	workingdir, err := os.Getwd()
+	viper.AddConfigPath(workingdir + "/" + addr)
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 
 	if err != nil {
+		log.Println(workingdir)
 		return nil, fmt.Errorf("could not read the config file: %v", err)
 	}
 
