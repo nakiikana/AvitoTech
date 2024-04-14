@@ -3,9 +3,11 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
+	"tools/internals/cfg"
 	"tools/internals/models"
 
 	"github.com/go-redis/redis/v8"
@@ -15,15 +17,15 @@ type Cache struct {
 	Connection *redis.Client
 }
 
-func NewCache() *Cache {
-	connection := NewRedisConnection()
+func NewCache(config *cfg.Configuration) *Cache {
+	connection := NewRedisConnection(config)
 	return &Cache{Connection: connection}
 }
 
-func NewRedisConnection() *redis.Client {
+func NewRedisConnection(config *cfg.Configuration) *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     fmt.Sprintf("%s:%s", config.Redis.Host, config.Redis.Port), // redis:  "localhost:6379"
+		Password: config.Redis.Password,
 		DB:       0,
 	})
 	ping, err := client.Ping(context.Background()).Result()

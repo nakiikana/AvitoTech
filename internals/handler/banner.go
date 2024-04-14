@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,13 +17,13 @@ func (h *Handler) FindBanner(w http.ResponseWriter, r *http.Request) {
 	input.TagID, err = strconv.ParseUint(r.URL.Query().Get("tag_id"), 10, 64)
 	if err != nil {
 		log.Printf("Banner: can't get tag_id: %v", err)
-		w.WriteHeader(http.StatusBadRequest) // лучше обрабатывать ошибки
+		JSONError(w, models.ErrorMessage{Error: ErrorBannerTagIdNotFound.Error()}, http.StatusBadRequest)
 		return
 	}
 	input.FeatureID, err = strconv.ParseUint(r.URL.Query().Get("feature_id"), 10, 64)
 	if err != nil {
 		log.Printf("Banner: can't get feature_id: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
+		JSONError(w, models.ErrorMessage{Error: ErrorBannerFeatureIdNotFound.Error()}, http.StatusBadRequest)
 		return
 	}
 	input.UseLastRevision, err = strconv.ParseBool(r.URL.Query().Get("use_last_revision"))
@@ -32,13 +31,18 @@ func (h *Handler) FindBanner(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		input.UseLastRevision = false
 	}
-	//ToDo: ПРОВЕРКА ТОКЕНОВ
-	//мб добавить валидацию для объектов
 
-	if content, err := h.service.FindBanner(input); err == sql.ErrNoRows {
+	if content, err := h.service.FindBanner(input); err != nil && err.Error() == "no rows found" {
 		log.Printf("Couldn't find the required banner: %v", err)
-		w.WriteHeader(http.StatusNotFound)
+		JSONError(w, models.ErrorMessage{Error: ErrorNoRows.Error()}, http.StatusNotFound)
 		return
+	} else if err != nil && err.Error() == "no access" {
+		log.Printf("FindBanner: no access granted")
+		JSONError(w, models.ErrorMessage{Error: ErrorAccess.Error()}, http.StatusForbidden)
+		return
+	} else if err != nil {
+		log.Printf("FindBanner: unexpected error: %v", err)
+		JSONError(w, models.ErrorMessage{Error: err.Error()}, http.StatusForbidden)
 	} else {
 		w.Write(content.Content)
 	}
@@ -147,11 +151,4 @@ func (h *Handler) GetFilteredBanner(w http.ResponseWriter, r *http.Request) {
 		JSONError(w, models.ErrorMessage{Error: "Couldn't unmarshall json"}, http.StatusInternalServerError)
 	}
 	w.Write(ans)
-}
-
-func JSONError(w http.ResponseWriter, err interface{}, code int) { // куда тебя деть
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(err)
 }

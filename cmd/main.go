@@ -21,7 +21,7 @@ func main() {
 		log.Fatalf("Couldn't connect tp DB: %v", err)
 	}
 	rep := repository.NewRepository(db)
-	cache := cache.NewCache()
+	cache := cache.NewCache(config)
 	srvc := service.NewService(rep, cache)
 	hdl := handler.NewHandler(srvc)
 	srv := new(server.Server)

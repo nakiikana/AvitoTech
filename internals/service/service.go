@@ -17,17 +17,14 @@ func NewService(rp *repository.Repository, cache *cache.Cache) *Service {
 }
 
 func (s *Service) FindBanner(input *models.BannerGetRequest) (*models.Banner, error) {
-	repoBann, err := s.rp.FindBanner(input)
-	if err != nil {
-		return nil, err
-	}
-	if repoBann.IsActive {
-
-	}
 	if !input.UseLastRevision {
 		key := strconv.FormatUint(uint64(input.TagID), 10) + strconv.FormatUint(uint64(input.FeatureID), 10)
 		banner, err := s.cache.FindBanner(key)
 		if err != nil && err.Error() == "redis returned nil" {
+			repoBann, err := s.rp.FindBanner(input)
+			if err != nil {
+				return nil, err
+			}
 			s.cache.AddFromRepo(repoBann, input)
 			return repoBann, err
 		}

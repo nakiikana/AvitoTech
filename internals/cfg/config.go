@@ -10,6 +10,7 @@ import (
 type Configuration struct {
 	DB     DB
 	Server Server
+	Redis  Redis
 }
 type DB struct {
 	Port     string
@@ -22,6 +23,12 @@ type DB struct {
 type Server struct {
 	Host string
 	Port string
+}
+
+type Redis struct {
+	Host     string
+	Port     string
+	Password string
 }
 
 func LoadAndStore(addr string) (*Configuration, error) {
